@@ -1,0 +1,42 @@
+{:paths ["bb"]
+ :tasks
+ {:requires ([clojure.string :as str]
+             [tasks])
+
+  jar {:doc "Build jar"
+       :task (clojure "-T:build jar")}
+
+  install {:doc "Install jar in local maven repo"
+           :task (clojure "-T:build install")}
+
+  test {:doc "Runs tests"
+        :task (clojure "-X:test")}
+
+  bump-version (do (tasks/bump-version)
+                   (shell "git add resources")
+                   (shell "git commit -m 'Bump version'"))
+
+  tag (shell (str "git tag v" (tasks/version)))
+
+  publish {:task (do
+                   (run 'bump-version)
+                   (run 'tag)
+                   (shell "git push --atomic origin main"
+                          (str "v" (tasks/version))))}
+
+  current-branch (->> (shell {:out :string} "git rev-parse --abbrev-ref HEAD")
+                      :out
+                      str/trim)
+
+  can-release {:depends [current-branch]
+               :task (= "main" current-branch)}
+
+  deploy {:doc "Deploys to clojars"
+          :depends [can-release]
+          :task (when can-release
+                  (clojure
+                   {:continue true}
+                   "-J-Dclojure.main.report=stderr -T:build deploy"))}
+
+  ,}
+ ,}
