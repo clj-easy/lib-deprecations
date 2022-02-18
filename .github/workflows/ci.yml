@@ -34,8 +34,8 @@ jobs:
           key: ${{ runner.os }}-graal-build-time-${{ hashFiles('deps.edn') }}
           restore-keys: "$graal-build-time-"
 
-      # - name: Run tests
-      #   run: bb test
+      - name: Run tests
+        run: bb test
 
   deploy:
     needs: test
